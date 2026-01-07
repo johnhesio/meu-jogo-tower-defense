@@ -19,7 +19,20 @@
 
         <div class="divider"></div>
 
-        <h3>Torres</h3>
+        <div class="stats-container">
+          <div class="stat-box" style="color: #e74c3c">
+            <span class="icon">❤️</span>
+            <span id="lives-display">20</span>
+          </div>
+          <div class="stat-box" style="color: #f1c40f">
+            <span class="icon">💰</span>
+            <span id="money-display">100</span>
+          </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <h3>Torres (Custo: 50)</h3>
         <div class="button-column">
           <button
             class="tower-btn selected"
@@ -72,6 +85,10 @@
 
       <main id="game-wrapper">
         <canvas id="gameCanvas" width="1280" height="720"></canvas>
+        <div id="game-over-screen" class="hidden">
+          <h1>GAME OVER</h1>
+          <button onclick="location.reload()">Reiniciar</button>
+        </div>
       </main>
     </div>
 

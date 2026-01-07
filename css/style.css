@@ -1,139 +1,129 @@
 /* Reset Básico */
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
+* { box-sizing: border-box; margin: 0; padding: 0; }
 
 body {
-  background-color: #121212;
-  font-family: "Roboto", sans-serif;
-  height: 100vh;
-  width: 100vw;
-  overflow: hidden;
-  color: white;
+    background-color: #121212;
+    font-family: 'Roboto', sans-serif;
+    height: 100vh;
+    width: 100vw;
+    overflow: hidden;
+    color: white;
 }
 
-#app-container {
-  display: flex;
-  width: 100%;
-  height: 100%;
-}
+#app-container { display: flex; width: 100%; height: 100%; }
 
 /* === BARRA LATERAL === */
 #ui-controls {
-  width: 250px;
-  background: linear-gradient(180deg, #1f2937 0%, #111827 100%);
-  border-right: 1px solid #374151;
-  display: flex;
-  flex-direction: column;
-  padding: 20px;
-  box-shadow: 4px 0 15px rgba(0, 0, 0, 0.5);
-  z-index: 10;
+    width: 250px;
+    background: linear-gradient(180deg, #1f2937 0%, #111827 100%);
+    border-right: 1px solid #374151;
+    display: flex;
+    flex-direction: column;
+    padding: 20px;
+    box-shadow: 4px 0 15px rgba(0,0,0,0.5);
+    z-index: 10;
 }
 
 .logo-area h2 {
-  font-family: "Orbitron", sans-serif;
-  text-align: center;
-  color: #fff;
-  letter-spacing: 2px;
-  margin-bottom: 10px;
-  text-shadow: 0 0 10px rgba(52, 152, 219, 0.7);
+    font-family: 'Orbitron', sans-serif;
+    text-align: center;
+    color: #fff;
+    letter-spacing: 2px;
+    margin-bottom: 10px;
+    text-shadow: 0 0 10px rgba(52, 152, 219, 0.7);
 }
 
-.divider {
-  height: 1px;
-  background: #374151;
-  margin: 15px 0;
-  width: 100%;
-}
+.divider { height: 1px; background: #374151; margin: 15px 0; width: 100%; }
 
 h3 {
-  font-size: 14px;
-  text-transform: uppercase;
-  color: #9ca3af;
-  margin-bottom: 15px;
-  letter-spacing: 1px;
+    font-size: 14px; text-transform: uppercase; color: #9ca3af;
+    margin-bottom: 15px; letter-spacing: 1px;
+}
+
+/* NOVOS MOSTRADORES (Vida e Dinheiro) */
+.stats-container {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 10px;
+}
+
+.stat-box {
+    background: rgba(0, 0, 0, 0.3);
+    padding: 10px;
+    border-radius: 8px;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 48%; /* Ocupa metade cada um */
+    justify-content: center;
+    border: 1px solid rgba(255,255,255,0.1);
 }
 
 /* Coluna de Botões */
-.button-column {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  flex-grow: 1;
-}
+.button-column { display: flex; flex-direction: column; gap: 12px; flex-grow: 1; }
 
 .tower-btn {
-  background-color: rgba(255, 255, 255, 0.05);
-  border: 1px solid transparent;
-  border-left: 4px solid var(--cor);
-  color: white !important; /* Força texto branco sempre (incluindo Ar e Luz) */
-  padding: 12px 15px;
-  font-size: 14px;
-  font-weight: bold;
-  cursor: pointer;
-  text-align: left;
-  border-radius: 0 8px 8px 0;
-  transition: all 0.2s ease;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  position: relative;
-  overflow: hidden;
+    background-color: rgba(255, 255, 255, 0.05);
+    border: 1px solid transparent;
+    border-left: 4px solid var(--cor);
+    color: white !important;
+    padding: 12px 15px;
+    font-size: 14px; font-weight: bold; cursor: pointer; text-align: left;
+    border-radius: 0 8px 8px 0; transition: all 0.2s ease;
+    display: flex; align-items: center; gap: 10px;
 }
 
-.tower-btn .icon {
-  font-size: 18px;
-}
-
-/* === EFEITO HOVER (O brilho acontece aqui agora) === */
 .tower-btn:hover {
-  background: linear-gradient(
-    90deg,
-    rgba(255, 255, 255, 0.1) 0%,
-    transparent 100%
-  );
-  transform: translateX(5px);
-  box-shadow: 0 0 15px var(--cor); /* Brilho externo */
-  text-shadow: 0 0 5px var(--brilho); /* Brilho no texto */
-  border-left-width: 6px;
+    background: linear-gradient(90deg, rgba(255,255,255,0.1) 0%, transparent 100%);
+    transform: translateX(5px);
+    box-shadow: 0 0 15px var(--cor);
+    text-shadow: 0 0 5px var(--brilho);
+    border-left-width: 6px;
 }
 
-/* === ESTADO SELECIONADO === */
-/* Indica qual está ativo, mas de forma mais sólida */
 .tower-btn.selected {
-  background-color: rgba(255, 255, 255, 0.15); /* Fundo mais claro */
-  border-left-width: 6px; /* Barra lateral grossa */
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    background-color: rgba(255, 255, 255, 0.15);
+    border-left-width: 6px;
+    border-top: 1px solid rgba(255,255,255,0.1);
+    border-bottom: 1px solid rgba(255,255,255,0.1);
 }
 
-/* Área de Status */
 .status-area {
-  background-color: #000;
-  padding: 15px;
-  border-radius: 8px;
-  text-align: center;
-  border: 1px solid #333;
+    background-color: #000; padding: 15px; border-radius: 8px;
+    text-align: center; border: 1px solid #333;
 }
 
 /* === ÁREA DO JOGO === */
 #game-wrapper {
-  flex-grow: 1;
-  background-color: #000;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 20px;
+    flex-grow: 1; background-color: #000;
+    display: flex; justify-content: center; align-items: center;
+    padding: 20px; position: relative;
 }
 
 canvas {
-  background-color: #222; /* Cor de fundo de segurança */
-  box-shadow: 0 0 30px rgba(0, 0, 0, 0.7);
-  border-radius: 4px;
-  max-width: 100%;
-  max-height: 100%;
-  object-fit: contain;
-  cursor: crosshair;
+    background-color: #222; box-shadow: 0 0 30px rgba(0,0,0,0.7);
+    border-radius: 4px; max-width: 100%; max-height: 100%;
+    object-fit: contain; cursor: crosshair;
 }
+
+/* TELA DE GAME OVER */
+#game-over-screen {
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.85);
+    display: flex; flex-direction: column;
+    justify-content: center; align-items: center;
+    color: #e74c3c; z-index: 100;
+}
+
+#game-over-screen h1 { font-family: 'Orbitron', sans-serif; font-size: 60px; margin-bottom: 20px; }
+
+#game-over-screen button {
+    padding: 15px 40px; font-size: 20px; cursor: pointer;
+    background: #e74c3c; color: white; border: none; border-radius: 5px;
+    font-weight: bold; text-transform: uppercase;
+}
+
+.hidden { display: none !important; }
