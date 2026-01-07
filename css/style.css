@@ -1,0 +1,139 @@
+/* Reset Básico */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background-color: #121212;
+  font-family: "Roboto", sans-serif;
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+  color: white;
+}
+
+#app-container {
+  display: flex;
+  width: 100%;
+  height: 100%;
+}
+
+/* === BARRA LATERAL === */
+#ui-controls {
+  width: 250px;
+  background: linear-gradient(180deg, #1f2937 0%, #111827 100%);
+  border-right: 1px solid #374151;
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+  box-shadow: 4px 0 15px rgba(0, 0, 0, 0.5);
+  z-index: 10;
+}
+
+.logo-area h2 {
+  font-family: "Orbitron", sans-serif;
+  text-align: center;
+  color: #fff;
+  letter-spacing: 2px;
+  margin-bottom: 10px;
+  text-shadow: 0 0 10px rgba(52, 152, 219, 0.7);
+}
+
+.divider {
+  height: 1px;
+  background: #374151;
+  margin: 15px 0;
+  width: 100%;
+}
+
+h3 {
+  font-size: 14px;
+  text-transform: uppercase;
+  color: #9ca3af;
+  margin-bottom: 15px;
+  letter-spacing: 1px;
+}
+
+/* Coluna de Botões */
+.button-column {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  flex-grow: 1;
+}
+
+.tower-btn {
+  background-color: rgba(255, 255, 255, 0.05);
+  border: 1px solid transparent;
+  border-left: 4px solid var(--cor);
+  color: white !important; /* Força texto branco sempre (incluindo Ar e Luz) */
+  padding: 12px 15px;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+  text-align: left;
+  border-radius: 0 8px 8px 0;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  position: relative;
+  overflow: hidden;
+}
+
+.tower-btn .icon {
+  font-size: 18px;
+}
+
+/* === EFEITO HOVER (O brilho acontece aqui agora) === */
+.tower-btn:hover {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.1) 0%,
+    transparent 100%
+  );
+  transform: translateX(5px);
+  box-shadow: 0 0 15px var(--cor); /* Brilho externo */
+  text-shadow: 0 0 5px var(--brilho); /* Brilho no texto */
+  border-left-width: 6px;
+}
+
+/* === ESTADO SELECIONADO === */
+/* Indica qual está ativo, mas de forma mais sólida */
+.tower-btn.selected {
+  background-color: rgba(255, 255, 255, 0.15); /* Fundo mais claro */
+  border-left-width: 6px; /* Barra lateral grossa */
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Área de Status */
+.status-area {
+  background-color: #000;
+  padding: 15px;
+  border-radius: 8px;
+  text-align: center;
+  border: 1px solid #333;
+}
+
+/* === ÁREA DO JOGO === */
+#game-wrapper {
+  flex-grow: 1;
+  background-color: #000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+}
+
+canvas {
+  background-color: #222; /* Cor de fundo de segurança */
+  box-shadow: 0 0 30px rgba(0, 0, 0, 0.7);
+  border-radius: 4px;
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  cursor: crosshair;
+}

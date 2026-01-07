@@ -1,13 +1,80 @@
 <!DOCTYPE html>
-<html lang="pt-br">
-<head>
-    <meta charset="UTF-8">
+<html lang="pt">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Elemental Tower Defense</title>
-    <link rel="stylesheet" href="css/style.css">
-</head>
-<body>
-    <canvas id="gameCanvas" width="1920" height="1080"></canvas>
-    
+    <link rel="stylesheet" href="css/style.css" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Roboto:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <div id="app-container">
+      <aside id="ui-controls">
+        <div class="logo-area">
+          <h2>ELEMENTAL<br />TD</h2>
+        </div>
+
+        <div class="divider"></div>
+
+        <h3>Torres</h3>
+        <div class="button-column">
+          <button
+            class="tower-btn selected"
+            data-element="AGUA"
+            style="--cor: #3498db; --brilho: #5dade2"
+          >
+            <span class="icon">💧</span> Água
+          </button>
+          <button
+            class="tower-btn"
+            data-element="FOGO"
+            style="--cor: #e74c3c; --brilho: #ff7675"
+          >
+            <span class="icon">🔥</span> Fogo
+          </button>
+          <button
+            class="tower-btn"
+            data-element="TERRA"
+            style="--cor: #795548; --brilho: #a1887f"
+          >
+            <span class="icon">🪨</span> Terra
+          </button>
+          <button
+            class="tower-btn"
+            data-element="AR"
+            style="--cor: #ecf0f1; --brilho: #ffffff"
+          >
+            <span class="icon">🌪️</span> Ar
+          </button>
+          <button
+            class="tower-btn"
+            data-element="LUZ"
+            style="--cor: #f1c40f; --brilho: #f7dc6f"
+          >
+            <span class="icon">✨</span> Luz
+          </button>
+          <button
+            class="tower-btn"
+            data-element="ESCURIDAO"
+            style="--cor: #8e44ad; --brilho: #bb8fce"
+          >
+            <span class="icon">🌑</span> Trevas
+          </button>
+        </div>
+
+        <div class="status-area">
+          <p>Wave: <span id="wave-display">1</span></p>
+        </div>
+      </aside>
+
+      <main id="game-wrapper">
+        <canvas id="gameCanvas" width="1280" height="720"></canvas>
+      </main>
+    </div>
+
     <script type="module" src="js/main.js"></script>
-</body>
+  </body>
 </html>
