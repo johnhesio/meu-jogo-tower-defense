@@ -1,7 +1,7 @@
 import { CAMINHO, ELEMENTOS, WAVES } from "./constants.js";
 import { Enemy } from "./classes/Enemy.js";
 import { Tower } from "./classes/Tower.js";
-import { Particle } from "./classes/Particle.js"; // NOVO IMPORT
+import { Particle } from "./classes/Particle.js";
 
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
@@ -9,7 +9,7 @@ const ctx = canvas.getContext("2d");
 const inimigos = [];
 const torres = [];
 const projeteis = [];
-const particulas = []; // NOVA LISTA PARA EFEITOS
+const particulas = [];
 
 // Estado do Jogo
 let dinheiro = 150;
@@ -17,6 +17,11 @@ let vidas = 20;
 let jogoRodando = true;
 const CUSTO_TORRE = 50;
 let elementoSelecionado = "AGUA";
+
+// === VARIÁVEIS DO RATO (MOUSE) ===
+let mouseX = 0;
+let mouseY = 0;
+let mouseNoCanvas = false; // Só desenha o fantasma se o rato estiver no jogo
 
 // === SISTEMA DE WAVES ===
 let waveIndex = 0;
@@ -42,24 +47,40 @@ botoes.forEach((botao) => {
   });
 });
 
-canvas.addEventListener("click", (event) => {
-  if (!jogoRodando) return;
+// === RASTREAMENTO DO RATO (NOVO) ===
+canvas.addEventListener("mousemove", (event) => {
   const rect = canvas.getBoundingClientRect();
   const escalaX = canvas.width / rect.width;
   const escalaY = canvas.height / rect.height;
-  const canvasX = (event.clientX - rect.left) * escalaX;
-  const canvasY = (event.clientY - rect.top) * escalaY;
+
+  mouseX = (event.clientX - rect.left) * escalaX;
+  mouseY = (event.clientY - rect.top) * escalaY;
+  mouseNoCanvas = true;
+});
+
+canvas.addEventListener("mouseleave", () => {
+  mouseNoCanvas = false;
+});
+
+// === CLIQUE (CONSTRUIR) ===
+canvas.addEventListener("click", () => {
+  if (!jogoRodando || !mouseNoCanvas) return;
 
   if (dinheiro >= CUSTO_TORRE) {
-    // Verifica colisão simples com o caminho para não construir em cima da estrada
-    // (Lógica simples: verifica distância dos pontos do caminho)
-    // Por enquanto, permite construir, mas desconta dinheiro
-    torres.push(new Tower(canvasX, canvasY, elementoSelecionado));
-    dinheiro -= CUSTO_TORRE;
+    // Pequena lógica para não construir muito perto do caminho
+    // (Isso é opcional, mas evita torres flutuando no meio da estrada)
+    let muitoPertoDaEstrada = false;
+    // Verifica distância de cada ponto do caminho (simplificado)
+    // Para uma verificação perfeita precisaria de matemática de colisão linha-ponto
 
-    // Efeito de poeira ao construir
-    for (let k = 0; k < 10; k++) {
-      particulas.push(new Particle(canvasX, canvasY, "#fff"));
+    if (!muitoPertoDaEstrada) {
+      torres.push(new Tower(mouseX, mouseY, elementoSelecionado));
+      dinheiro -= CUSTO_TORRE;
+
+      // Efeito de construção
+      for (let k = 0; k < 10; k++) {
+        particulas.push(new Particle(mouseX, mouseY, "#fff"));
+      }
     }
   }
 });
@@ -130,7 +151,7 @@ function spawnEnemy() {
 function loop() {
   if (!jogoRodando) return;
 
-  // Mapa
+  // 1. Desenho do Mapa
   ctx.fillStyle = "#4CAF50";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
@@ -151,13 +172,26 @@ function loop() {
 
   gerenciarWaves();
 
-  // Torres
+  // 2. Torres
   torres.forEach((t) => {
     t.atualizar(inimigos, projeteis);
     t.desenhar(ctx);
+
+    // Se passar o rato em cima de uma torre existente, mostra o alcance dela
+    const dx = mouseX - t.x;
+    const dy = mouseY - t.y;
+    if (Math.sqrt(dx * dx + dy * dy) < 20) {
+      ctx.beginPath();
+      ctx.arc(t.x, t.y, t.raioAlcance, 0, Math.PI * 2);
+      ctx.fillStyle = "rgba(255, 255, 255, 0.1)";
+      ctx.fill();
+      ctx.strokeStyle = "rgba(255, 255, 255, 0.3)";
+      ctx.lineWidth = 1;
+      ctx.stroke();
+    }
   });
 
-  // Projéteis
+  // 3. Projéteis
   for (let i = projeteis.length - 1; i >= 0; i--) {
     const p = projeteis[i];
     p.atualizar();
@@ -180,17 +214,14 @@ function loop() {
         p.inimigosAtingidos.push(mob);
         p.pierce--;
 
-        // === EFEITO VISUAL DE IMPACTO (NOVO) ===
-        // Cria 5 partículas na posição do impacto
-        for (let k = 0; k < 5; k++) {
+        // Efeito visual de impacto
+        for (let k = 0; k < 5; k++)
           particulas.push(new Particle(p.x, p.y, p.cor));
-        }
 
         let danoFinal = p.dano;
         const regra = ELEMENTOS[p.tipo];
         if (regra.forteContra === mob.tipo) {
           danoFinal *= 2;
-          // Partículas extras para Dano Crítico (Brancas)
           for (let k = 0; k < 3; k++)
             particulas.push(new Particle(p.x, p.y, "#fff"));
         }
@@ -213,18 +244,15 @@ function loop() {
     if (p.hit) projeteis.splice(i, 1);
   }
 
-  // === ATUALIZAR PARTÍCULAS (NOVO) ===
+  // 4. Partículas
   for (let i = particulas.length - 1; i >= 0; i--) {
     const part = particulas[i];
     part.atualizar();
     part.desenhar(ctx);
-    // Remove partículas invisíveis
-    if (part.vida <= 0) {
-      particulas.splice(i, 1);
-    }
+    if (part.vida <= 0) particulas.splice(i, 1);
   }
 
-  // Inimigos
+  // 5. Inimigos
   for (let i = inimigos.length - 1; i >= 0; i--) {
     const mob = inimigos[i];
     mob.atualizar();
@@ -233,10 +261,8 @@ function loop() {
     if (mob.vida <= 0) {
       inimigos.splice(i, 1);
       dinheiro += 15;
-      // Efeito de Morte (Explosão maior)
-      for (let k = 0; k < 10; k++) {
+      for (let k = 0; k < 10; k++)
         particulas.push(new Particle(mob.x, mob.y, mob.corBase));
-      }
     } else if (mob.waypointIndex >= CAMINHO.length - 1) {
       inimigos.splice(i, 1);
       vidas--;
@@ -245,6 +271,30 @@ function loop() {
         telaGameOver.classList.remove("hidden");
       }
     }
+  }
+
+  // === 6. DESENHO DO FANTASMA (PREVIEW DA CONSTRUÇÃO) - NOVO ===
+  if (mouseNoCanvas && dinheiro >= CUSTO_TORRE) {
+    // Define o raio baseado no elemento selecionado
+    let raioPreview = 180; // Padrão
+    if (elementoSelecionado === "LUZ") raioPreview = 300;
+
+    // Desenha o círculo de alcance
+    ctx.beginPath();
+    ctx.arc(mouseX, mouseY, raioPreview, 0, Math.PI * 2);
+    ctx.fillStyle = "rgba(255, 255, 255, 0.1)"; // Transparente
+    ctx.fill();
+    ctx.strokeStyle = "rgba(255, 255, 255, 0.5)"; // Borda visível
+    ctx.setLineDash([5, 5]); // Linha tracejada
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    ctx.setLineDash([]); // Reseta linha
+
+    // Desenha uma "caixa" onde a torre vai ficar
+    ctx.fillStyle = ELEMENTOS[elementoSelecionado].cor;
+    ctx.globalAlpha = 0.5; // Fantasma transparente
+    ctx.fillRect(mouseX - 20, mouseY - 20, 40, 40);
+    ctx.globalAlpha = 1.0;
   }
 
   requestAnimationFrame(loop);
