@@ -1,55 +1,47 @@
 import { ELEMENTOS, CAMINHO } from "../constants.js";
 
 export class Enemy {
-  constructor(elementoTipo) {
+  // Agora aceita vidaExtra no construtor
+  constructor(elementoTipo, vidaExtra = 0) {
     this.waypointIndex = 0;
     this.x = CAMINHO[0].x;
     this.y = CAMINHO[0].y;
 
-    // Status Base
-    this.velocidadeBase = 2; // Velocidade normal
+    this.velocidadeBase = 2;
     this.velocidadeAtual = 2;
-    this.maxVida = 150; // Aumentei um pouco a vida para testar os poderes
-    this.vida = 150;
-    this.raio = 20;
 
+    // Vida Base (150) + Dificuldade da Wave
+    this.maxVida = 150 + vidaExtra;
+    this.vida = this.maxVida;
+
+    this.raio = 20;
     this.tipo = elementoTipo;
     this.corBase = ELEMENTOS[elementoTipo].cor;
 
-    // === CONTROLO DE EFEITOS (DEBUFFS) ===
-    this.slowTimer = 0; // Tempo restante de lentidão (Água)
-    this.stunTimer = 0; // Tempo restante parado (Terra)
-    this.burnTimer = 0; // Tempo restante queimando (Fogo)
-    this.burnTick = 0; // Controle para dano por segundo
+    // Debuffs
+    this.slowTimer = 0;
+    this.stunTimer = 0;
+    this.burnTimer = 0;
+    this.burnTick = 0;
   }
 
   atualizar() {
-    // 1. Gerir Efeitos de Status
     this.velocidadeAtual = this.velocidadeBase;
 
-    // Efeito: ÁGUA (Slow)
     if (this.slowTimer > 0) {
-      this.velocidadeAtual *= 0.5; // 50% de velocidade
+      this.velocidadeAtual *= 0.5;
       this.slowTimer--;
     }
-
-    // Efeito: TERRA (Stun)
     if (this.stunTimer > 0) {
-      this.velocidadeAtual = 0; // Parado
+      this.velocidadeAtual = 0;
       this.stunTimer--;
     }
-
-    // Efeito: FOGO (Burn - Dano por tempo)
     if (this.burnTimer > 0) {
       this.burnTimer--;
       this.burnTick++;
-      // Aplica dano a cada 30 frames (0.5 segundos)
-      if (this.burnTick % 30 === 0) {
-        this.vida -= 5; // Dano de queimadura
-      }
+      if (this.burnTick % 30 === 0) this.vida -= 5;
     }
 
-    // 2. Movimento (Se não estiver stunado)
     if (this.velocidadeAtual > 0) {
       const alvo = CAMINHO[this.waypointIndex + 1];
       if (!alvo) return;
@@ -68,14 +60,12 @@ export class Enemy {
   }
 
   desenhar(ctx) {
-    // Corpo do Inimigo
     ctx.beginPath();
     ctx.arc(this.x, this.y, this.raio, 0, Math.PI * 2);
 
-    // Mudar cor se estiver sob efeito
-    if (this.stunTimer > 0) ctx.fillStyle = "#795548"; // Castanho (Stun)
-    else if (this.slowTimer > 0) ctx.fillStyle = "#85C1E9"; // Azul claro (Gelo)
-    else if (this.burnTimer > 0) ctx.fillStyle = "#E67E22"; // Laranja (Fogo)
+    if (this.stunTimer > 0) ctx.fillStyle = "#795548";
+    else if (this.slowTimer > 0) ctx.fillStyle = "#85C1E9";
+    else if (this.burnTimer > 0) ctx.fillStyle = "#E67E22";
     else ctx.fillStyle = this.corBase;
 
     ctx.fill();
@@ -83,12 +73,10 @@ export class Enemy {
     ctx.stroke();
     ctx.closePath();
 
-    // Indicador de Status (Texto pequeno em cima)
     if (this.stunTimer > 0) this.desenharStatus(ctx, "⛔", -15);
     if (this.slowTimer > 0) this.desenharStatus(ctx, "❄️", -15);
-    if (this.burnTimer > 0) this.desenharStatus(ctx, "🔥", -25); // Um pouco mais acima
+    if (this.burnTimer > 0) this.desenharStatus(ctx, "🔥", -25);
 
-    // Barra de Vida
     const larguraBarra = 40;
     const alturaBarra = 5;
     const xBarra = this.x - larguraBarra / 2;
