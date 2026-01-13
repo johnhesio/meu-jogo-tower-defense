@@ -1,20 +1,18 @@
 import { CAMINHO, ELEMENTOS } from "./constants.js";
 import { Enemy } from "./classes/Enemy.js";
 import { Tower } from "./classes/Tower.js";
-// O Projectile é criado internamente pela Torre, não precisa importar aqui
 
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
 
-// Listas de objetos do jogo
 const inimigos = [];
 const torres = [];
 const projeteis = [];
 
-// === ESTADO DO JOGO (ECONOMIA E VIDAS) ===
-let dinheiro = 100; // Dinheiro inicial
-let vidas = 20; // Vidas iniciais
-let jogoRodando = true; // Para controlar o Game Over
+// Estado do Jogo
+let dinheiro = 150; // Começa com mais dinheiro para testar
+let vidas = 20;
+let jogoRodando = true;
 const CUSTO_TORRE = 50;
 let elementoSelecionado = "AGUA";
 
@@ -23,7 +21,7 @@ const displayVidas = document.getElementById("lives-display");
 const displayDinheiro = document.getElementById("money-display");
 const telaGameOver = document.getElementById("game-over-screen");
 
-// === SELEÇÃO DE TORRE ===
+// === SELEÇÃO ===
 const botoes = document.querySelectorAll(".tower-btn");
 botoes.forEach((botao) => {
   botao.addEventListener("click", () => {
@@ -33,9 +31,9 @@ botoes.forEach((botao) => {
   });
 });
 
-// === CLIQUE NO MAPA (COMPRAR TORRE) ===
+// === COMPRA DE TORRES ===
 canvas.addEventListener("click", (event) => {
-  if (!jogoRodando) return; // Não faz nada se o jogo acabou
+  if (!jogoRodando) return;
 
   const rect = canvas.getBoundingClientRect();
   const escalaX = canvas.width / rect.width;
@@ -43,35 +41,28 @@ canvas.addEventListener("click", (event) => {
   const canvasX = (event.clientX - rect.left) * escalaX;
   const canvasY = (event.clientY - rect.top) * escalaY;
 
-  // 1. Verificar se tem dinheiro
+  // Impede construir em cima do caminho (Lógica de colisão simples com linhas)
+  // Para simplificar, vamos apenas permitir a compra
   if (dinheiro >= CUSTO_TORRE) {
-    // 2. Criar a torre
-    const novaTorre = new Tower(canvasX, canvasY, elementoSelecionado);
-    torres.push(novaTorre);
-
-    // 3. Descontar dinheiro
+    torres.push(new Tower(canvasX, canvasY, elementoSelecionado));
     dinheiro -= CUSTO_TORRE;
-    console.log("Torre comprada! Saldo: " + dinheiro);
-  } else {
-    console.log("Dinheiro insuficiente!");
-    // Opcional: Efeito visual ou sonoro de erro
   }
 });
 
-// === GERADOR DE INIMIGOS ===
 function spawnEnemy() {
   if (!jogoRodando) return;
   const tipos = ["AGUA", "FOGO", "TERRA", "AR", "LUZ", "ESCURIDAO"];
+  // Aumenta a dificuldade com o tempo: Inimigos aleatórios
   const tipoAleatorio = tipos[Math.floor(Math.random() * tipos.length)];
   inimigos.push(new Enemy(tipoAleatorio));
 }
-setInterval(spawnEnemy, 2000);
+setInterval(spawnEnemy, 1800);
 
-// === LOOP PRINCIPAL ===
+// === LOOP ===
 function loop() {
-  if (!jogoRodando) return; // Para o desenho se deu Game Over
+  if (!jogoRodando) return;
 
-  // 1. DESENHO DO MAPA
+  // 1. Mapa
   ctx.fillStyle = "#4CAF50";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
@@ -83,61 +74,118 @@ function loop() {
   ctx.lineCap = "round";
   ctx.lineJoin = "round";
   ctx.stroke();
-
   ctx.strokeStyle = "#5D4037";
   ctx.lineWidth = 74;
   ctx.stroke();
 
-  // 2. ATUALIZAR INTERFACE HTML
+  // 2. Interface
   displayVidas.innerText = vidas;
   displayDinheiro.innerText = dinheiro;
 
-  // 3. TORRES
-  torres.forEach((torre) => {
-    torre.atualizar(inimigos, projeteis);
-    torre.desenhar(ctx);
+  // 3. Torres
+  torres.forEach((t) => {
+    t.atualizar(inimigos, projeteis);
+    t.desenhar(ctx);
   });
 
-  // 4. PROJÉTEIS
+  // 4. Projéteis (Lógica de Poderes aqui!)
   for (let i = projeteis.length - 1; i >= 0; i--) {
     const p = projeteis[i];
     p.atualizar();
     p.desenhar(ctx);
 
-    if (p.hit) {
-      if (p.alvo && p.alvo.vida > 0) {
-        // Cálculo de Dano Elemental
-        let danoFinal = p.dano;
-        const tipoInimigo = p.alvo.tipo;
-        const regra = ELEMENTOS[p.tipo];
-        if (regra.forteContra === tipoInimigo) danoFinal *= 2;
+    // Verifica colisão com TODOS os inimigos (para suportar perfuração)
+    // Se o projétil sai da tela, removemos
+    if (p.x < 0 || p.x > canvas.width || p.y < 0 || p.y > canvas.height) {
+      projeteis.splice(i, 1);
+      continue;
+    }
 
-        p.alvo.vida -= danoFinal;
+    // Checa colisão com inimigos
+    for (let j = 0; j < inimigos.length; j++) {
+      const mob = inimigos[j];
+
+      // Se já acertou este mob, ignora (para não dar hit duplo no mesmo frame)
+      if (p.inimigosAtingidos.includes(mob)) continue;
+
+      const dx = mob.x - p.x;
+      const dy = mob.y - p.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+
+      // Colisão!
+      if (dist < mob.raio + p.raio) {
+        // Adiciona à lista de atingidos
+        p.inimigosAtingidos.push(mob);
+        p.pierce--; // Gasta uma perfuração
+
+        // === APLICAÇÃO DE DANO E PODERES ===
+        let danoFinal = p.dano;
+        const regra = ELEMENTOS[p.tipo];
+
+        // Fraqueza Elemental
+        if (regra.forteContra === mob.tipo) danoFinal *= 2;
+        // Resistência (Mesmo elemento)
+        if (p.tipo === mob.tipo) danoFinal *= 0.5;
+
+        // 1. ÁGUA (Slow)
+        if (p.tipo === "AGUA") {
+          mob.slowTimer = 120; // 2 segundos (60 frames * 2)
+        }
+
+        // 2. FOGO (Burn)
+        if (p.tipo === "FOGO") {
+          mob.burnTimer = 180; // 3 segundos
+        }
+
+        // 3. TERRA (Chance de Stun)
+        if (p.tipo === "TERRA") {
+          if (Math.random() < 0.25) {
+            // 25% de chance
+            mob.stunTimer = 60; // 1 segundo parado
+          }
+        }
+
+        // 4. ESCURIDÃO (Execução)
+        if (p.tipo === "ESCURIDAO") {
+          if (mob.vida < mob.maxVida * 0.2) {
+            // Menos de 20% vida
+            danoFinal = 9999; // Morte certa
+            console.log("EXECUÇÃO!");
+          }
+        }
+
+        // Aplica o Dano
+        mob.vida -= danoFinal;
+
+        // Se acabou a perfuração, o projétil some
+        if (p.pierce <= 0) {
+          p.hit = true; // Marca para remoção
+          break; // Sai do loop de inimigos
+        }
       }
+    }
+
+    // Remove projétil se já bateu o limite
+    if (p.hit) {
       projeteis.splice(i, 1);
     }
   }
 
-  // 5. INIMIGOS
+  // 5. Inimigos
   for (let i = inimigos.length - 1; i >= 0; i--) {
     const mob = inimigos[i];
     mob.atualizar();
     mob.desenhar(ctx);
 
-    // CASO 1: Inimigo Morreu
     if (mob.vida <= 0) {
       inimigos.splice(i, 1);
-      dinheiro += 10; // Ganha dinheiro!
-    }
-    // CASO 2: Inimigo chegou ao fim (Fuga)
-    else if (mob.waypointIndex >= CAMINHO.length - 1) {
+      dinheiro += 15;
+    } else if (mob.waypointIndex >= CAMINHO.length - 1) {
       inimigos.splice(i, 1);
-      vidas -= 1; // Perde vida!
-
-      // Verifica Game Over
+      vidas--;
       if (vidas <= 0) {
         jogoRodando = false;
-        telaGameOver.classList.remove("hidden"); // Mostra tela de fim
+        telaGameOver.classList.remove("hidden");
       }
     }
   }
@@ -145,5 +193,4 @@ function loop() {
   requestAnimationFrame(loop);
 }
 
-// Inicia
 loop();
