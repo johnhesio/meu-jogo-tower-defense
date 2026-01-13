@@ -1,4 +1,4 @@
-import { CAMINHO, ELEMENTOS, WAVES } from "./constants.js"; // Importar WAVES
+import { CAMINHO, ELEMENTOS, WAVES } from "./constants.js";
 import { Enemy } from "./classes/Enemy.js";
 import { Tower } from "./classes/Tower.js";
 
@@ -17,19 +17,20 @@ const CUSTO_TORRE = 50;
 let elementoSelecionado = "AGUA";
 
 // === SISTEMA DE WAVES ===
-let waveIndex = 0; // Qual wave estamos (0 = Wave 1)
-let inimigosParaSpawnar = 0; // Quantos faltam criar nesta wave
+let waveIndex = 0;
+let inimigosParaSpawnar = 0;
 let tempoParaProximoSpawn = 0;
-let tempoProximaWave = 0; // Tempo de espera entre waves (em frames)
-let estadoWave = "WAITING"; // WAITING, SPAWNING, COMBAT
+let tempoProximaWave = 0;
+let estadoWave = "WAITING";
 
 // Referências HTML
 const displayVidas = document.getElementById("lives-display");
 const displayDinheiro = document.getElementById("money-display");
 const displayWave = document.getElementById("wave-display");
 const telaGameOver = document.getElementById("game-over-screen");
+const telaVitoria = document.getElementById("victory-screen"); // NOVO
 
-// === SELEÇÃO E COMPRA (Igual) ===
+// === SELEÇÃO ===
 const botoes = document.querySelectorAll(".tower-btn");
 botoes.forEach((botao) => {
   botao.addEventListener("click", () => {
@@ -55,20 +56,18 @@ canvas.addEventListener("click", (event) => {
 
 // === LOGICA DE GESTÃO DE WAVES ===
 function gerenciarWaves() {
-  // Se o jogo acabou ou já ganhamos todas as waves
+  // CONDIÇÃO DE VITÓRIA
+  // Se passamos da última wave E não há mais inimigos vivos
   if (waveIndex >= WAVES.length && inimigos.length === 0) {
-    // Vitória! (Podes criar uma tela de vitória aqui)
-    console.log("VITÓRIA!");
+    jogoRodando = false; // Para o jogo
+    telaVitoria.classList.remove("hidden"); // Mostra Tela de Vitória
     return;
   }
 
-  // 1. ESPERANDO A PRÓXIMA WAVE
+  // 1. ESPERANDO
   if (estadoWave === "WAITING") {
     tempoProximaWave++;
-
-    // Desenhar contagem regressiva no canvas
     if (tempoProximaWave < 300) {
-      // Espera 5 segundos (300 frames)
       ctx.fillStyle = "white";
       ctx.font = "40px Orbitron";
       ctx.textAlign = "center";
@@ -78,56 +77,47 @@ function gerenciarWaves() {
         100
       );
     } else {
-      // INICIAR WAVE
       iniciarWave();
     }
   }
 
-  // 2. CRIANDO INIMIGOS (SPAWNING)
+  // 2. SPAWNING
   if (estadoWave === "SPAWNING") {
     tempoParaProximoSpawn--;
     if (tempoParaProximoSpawn <= 0) {
       spawnEnemy();
-
       const dadosWave = WAVES[waveIndex];
-      tempoParaProximoSpawn = dadosWave.intervalo / 16; // Converte ms para frames (aprox)
-
+      tempoParaProximoSpawn = dadosWave.intervalo / 16;
       inimigosParaSpawnar--;
       if (inimigosParaSpawnar <= 0) {
-        estadoWave = "COMBAT"; // Parar de spawnar, esperar jogador matar todos
+        estadoWave = "COMBAT";
       }
     }
   }
 
-  // 3. COMBATE (Verificar se acabou)
+  // 3. COMBATE
   if (estadoWave === "COMBAT") {
     if (inimigos.length === 0) {
-      // Wave Limpa!
-      dinheiro += 100; // Bónus de fim de wave
-      waveIndex++; // Avança índice
-      estadoWave = "WAITING"; // Volta a esperar
-      tempoProximaWave = 0; // Reseta timer
+      dinheiro += 100; // Bónus
+      waveIndex++;
+      estadoWave = "WAITING";
+      tempoProximaWave = 0;
     }
   }
 }
 
 function iniciarWave() {
-  if (waveIndex >= WAVES.length) return; // Acabou o jogo
-
+  if (waveIndex >= WAVES.length) return;
   const dadosWave = WAVES[waveIndex];
   inimigosParaSpawnar = dadosWave.quantidade;
   estadoWave = "SPAWNING";
-  displayWave.innerText = waveIndex + 1; // Atualiza HTML
-  console.log(`Iniciando Wave ${waveIndex + 1}`);
+  displayWave.innerText = waveIndex + 1;
 }
 
 function spawnEnemy() {
   const dadosWave = WAVES[waveIndex];
-  // Escolhe um tipo aleatório da lista permitida nesta wave
   const tipoAleatorio =
     dadosWave.tipos[Math.floor(Math.random() * dadosWave.tipos.length)];
-
-  // Cria inimigo com a vida extra da wave
   inimigos.push(new Enemy(tipoAleatorio, dadosWave.vidaExtra));
 }
 
@@ -135,7 +125,7 @@ function spawnEnemy() {
 function loop() {
   if (!jogoRodando) return;
 
-  // 1. Desenho Base
+  // Mapa
   ctx.fillStyle = "#4CAF50";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
@@ -151,20 +141,18 @@ function loop() {
   ctx.lineWidth = 74;
   ctx.stroke();
 
-  // 2. Interface
   displayVidas.innerText = vidas;
   displayDinheiro.innerText = dinheiro;
 
-  // 3. Gerir Waves (O cérebro novo)
   gerenciarWaves();
 
-  // 4. Torres
+  // Torres
   torres.forEach((t) => {
     t.atualizar(inimigos, projeteis);
     t.desenhar(ctx);
   });
 
-  // 5. Projéteis
+  // Projéteis
   for (let i = projeteis.length - 1; i >= 0; i--) {
     const p = projeteis[i];
     p.atualizar();
@@ -192,7 +180,6 @@ function loop() {
         if (regra.forteContra === mob.tipo) danoFinal *= 2;
         if (p.tipo === mob.tipo) danoFinal *= 0.5;
 
-        // Aplica Poderes (Simplificado do código anterior)
         if (p.tipo === "AGUA") mob.slowTimer = 120;
         if (p.tipo === "FOGO") mob.burnTimer = 180;
         if (p.tipo === "TERRA" && Math.random() < 0.25) mob.stunTimer = 60;
@@ -210,7 +197,7 @@ function loop() {
     if (p.hit) projeteis.splice(i, 1);
   }
 
-  // 6. Inimigos
+  // Inimigos
   for (let i = inimigos.length - 1; i >= 0; i--) {
     const mob = inimigos[i];
     mob.atualizar();
@@ -224,7 +211,7 @@ function loop() {
       vidas--;
       if (vidas <= 0) {
         jogoRodando = false;
-        telaGameOver.classList.remove("hidden");
+        telaGameOver.classList.remove("hidden"); // Derrota
       }
     }
   }
