@@ -1,6 +1,7 @@
 import { CAMINHO, ELEMENTOS, WAVES } from "./constants.js";
 import { Enemy } from "./classes/Enemy.js";
 import { Tower } from "./classes/Tower.js";
+import { Particle } from "./classes/Particle.js"; // NOVO IMPORT
 
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
@@ -8,6 +9,7 @@ const ctx = canvas.getContext("2d");
 const inimigos = [];
 const torres = [];
 const projeteis = [];
+const particulas = []; // NOVA LISTA PARA EFEITOS
 
 // Estado do Jogo
 let dinheiro = 150;
@@ -28,7 +30,7 @@ const displayVidas = document.getElementById("lives-display");
 const displayDinheiro = document.getElementById("money-display");
 const displayWave = document.getElementById("wave-display");
 const telaGameOver = document.getElementById("game-over-screen");
-const telaVitoria = document.getElementById("victory-screen"); // NOVO
+const telaVitoria = document.getElementById("victory-screen");
 
 // === SELEÇÃO ===
 const botoes = document.querySelectorAll(".tower-btn");
@@ -49,22 +51,27 @@ canvas.addEventListener("click", (event) => {
   const canvasY = (event.clientY - rect.top) * escalaY;
 
   if (dinheiro >= CUSTO_TORRE) {
+    // Verifica colisão simples com o caminho para não construir em cima da estrada
+    // (Lógica simples: verifica distância dos pontos do caminho)
+    // Por enquanto, permite construir, mas desconta dinheiro
     torres.push(new Tower(canvasX, canvasY, elementoSelecionado));
     dinheiro -= CUSTO_TORRE;
+
+    // Efeito de poeira ao construir
+    for (let k = 0; k < 10; k++) {
+      particulas.push(new Particle(canvasX, canvasY, "#fff"));
+    }
   }
 });
 
 // === LOGICA DE GESTÃO DE WAVES ===
 function gerenciarWaves() {
-  // CONDIÇÃO DE VITÓRIA
-  // Se passamos da última wave E não há mais inimigos vivos
   if (waveIndex >= WAVES.length && inimigos.length === 0) {
-    jogoRodando = false; // Para o jogo
-    telaVitoria.classList.remove("hidden"); // Mostra Tela de Vitória
+    jogoRodando = false;
+    telaVitoria.classList.remove("hidden");
     return;
   }
 
-  // 1. ESPERANDO
   if (estadoWave === "WAITING") {
     tempoProximaWave++;
     if (tempoProximaWave < 300) {
@@ -81,7 +88,6 @@ function gerenciarWaves() {
     }
   }
 
-  // 2. SPAWNING
   if (estadoWave === "SPAWNING") {
     tempoParaProximoSpawn--;
     if (tempoParaProximoSpawn <= 0) {
@@ -95,10 +101,9 @@ function gerenciarWaves() {
     }
   }
 
-  // 3. COMBATE
   if (estadoWave === "COMBAT") {
     if (inimigos.length === 0) {
-      dinheiro += 100; // Bónus
+      dinheiro += 100;
       waveIndex++;
       estadoWave = "WAITING";
       tempoProximaWave = 0;
@@ -175,9 +180,20 @@ function loop() {
         p.inimigosAtingidos.push(mob);
         p.pierce--;
 
+        // === EFEITO VISUAL DE IMPACTO (NOVO) ===
+        // Cria 5 partículas na posição do impacto
+        for (let k = 0; k < 5; k++) {
+          particulas.push(new Particle(p.x, p.y, p.cor));
+        }
+
         let danoFinal = p.dano;
         const regra = ELEMENTOS[p.tipo];
-        if (regra.forteContra === mob.tipo) danoFinal *= 2;
+        if (regra.forteContra === mob.tipo) {
+          danoFinal *= 2;
+          // Partículas extras para Dano Crítico (Brancas)
+          for (let k = 0; k < 3; k++)
+            particulas.push(new Particle(p.x, p.y, "#fff"));
+        }
         if (p.tipo === mob.tipo) danoFinal *= 0.5;
 
         if (p.tipo === "AGUA") mob.slowTimer = 120;
@@ -197,6 +213,17 @@ function loop() {
     if (p.hit) projeteis.splice(i, 1);
   }
 
+  // === ATUALIZAR PARTÍCULAS (NOVO) ===
+  for (let i = particulas.length - 1; i >= 0; i--) {
+    const part = particulas[i];
+    part.atualizar();
+    part.desenhar(ctx);
+    // Remove partículas invisíveis
+    if (part.vida <= 0) {
+      particulas.splice(i, 1);
+    }
+  }
+
   // Inimigos
   for (let i = inimigos.length - 1; i >= 0; i--) {
     const mob = inimigos[i];
@@ -206,12 +233,16 @@ function loop() {
     if (mob.vida <= 0) {
       inimigos.splice(i, 1);
       dinheiro += 15;
+      // Efeito de Morte (Explosão maior)
+      for (let k = 0; k < 10; k++) {
+        particulas.push(new Particle(mob.x, mob.y, mob.corBase));
+      }
     } else if (mob.waypointIndex >= CAMINHO.length - 1) {
       inimigos.splice(i, 1);
       vidas--;
       if (vidas <= 0) {
         jogoRodando = false;
-        telaGameOver.classList.remove("hidden"); // Derrota
+        telaGameOver.classList.remove("hidden");
       }
     }
   }

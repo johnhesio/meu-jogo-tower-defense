@@ -19,14 +19,14 @@ export class Tower {
 
     // === ESTATÍSTICAS ESPECIAIS POR ELEMENTO ===
     if (elementoTipo === "LUZ") {
-      this.raioAlcance = 300; // Alcance enorme (Sniper)
-      this.dano = 40; // Dano alto
-      this.velocidadeAtaque = 90; // Atira devagar
+      this.raioAlcance = 300; // Sniper
+      this.dano = 40;
+      this.velocidadeAtaque = 90;
     } else if (elementoTipo === "TERRA") {
       this.velocidadeAtaque = 80; // Lento
-      this.dano = 30; // Dano alto
+      this.dano = 30;
     } else if (elementoTipo === "AR") {
-      this.dano = 15; // Dano menor, mas acerta vários
+      this.dano = 15;
     }
   }
 
@@ -36,7 +36,6 @@ export class Tower {
     }
 
     if (this.cooldown <= 0) {
-      // Filtra inimigos no alcance
       const alvosPossiveis = inimigos.filter((mob) => {
         const dx = mob.x - this.x;
         const dy = mob.y - this.y;
@@ -45,13 +44,12 @@ export class Tower {
       });
 
       if (alvosPossiveis.length > 0) {
-        // Estratégia de Alvo:
-        // Escuridão prefere inimigos com pouca vida (para executar)
         let alvo;
+        // Prioridade de alvo: Escuridão foca nos fracos, outros no primeiro
         if (this.tipo === "ESCURIDAO") {
           alvo = alvosPossiveis.sort((a, b) => a.vida - b.vida)[0];
         } else {
-          alvo = alvosPossiveis[0]; // O primeiro que entrou (padrão)
+          alvo = alvosPossiveis[0];
         }
 
         this.atirar(alvo, listaProjeteis);
@@ -67,28 +65,31 @@ export class Tower {
   }
 
   desenhar(ctx) {
-    // Visual simples da Torre
-    ctx.fillStyle = this.cor;
-    ctx.fillRect(
-      this.x - this.largura / 2,
-      this.y - this.altura / 2,
-      this.largura,
-      this.altura
-    );
+    // 1. Desenhar a BASE da torre (Cinza Escuro)
+    ctx.fillStyle = "#2c3e50";
+    // Sombra leve
+    ctx.fillRect(this.x - 20, this.y - 20, 40, 40);
 
-    ctx.strokeStyle = "#fff";
+    // Detalhe da base (Borda metálica)
+    ctx.strokeStyle = "#95a5a6";
     ctx.lineWidth = 2;
-    ctx.strokeRect(
-      this.x - this.largura / 2,
-      this.y - this.altura / 2,
-      this.largura,
-      this.altura
-    );
+    ctx.strokeRect(this.x - 20, this.y - 20, 40, 40);
 
-    // Ícone do elemento no topo (Opcional, só para ficar bonito)
-    ctx.font = "20px Arial";
+    // 2. Desenhar o CRISTAL ELEMENTAL (Menor, no centro)
+    ctx.fillStyle = this.cor;
+    ctx.fillRect(this.x - 12, this.y - 12, 24, 24);
+
+    // Brilho do cristal (Borda clara)
+    ctx.strokeStyle = "#fff";
+    ctx.lineWidth = 1;
+    ctx.strokeRect(this.x - 12, this.y - 12, 24, 24);
+
+    // 3. ÍCONE DO ELEMENTO (No topo)
+    ctx.font = "16px Arial";
     ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
     ctx.fillStyle = "white";
+
     let icone = "";
     if (this.tipo === "AGUA") icone = "💧";
     if (this.tipo === "FOGO") icone = "🔥";
@@ -96,6 +97,7 @@ export class Tower {
     if (this.tipo === "AR") icone = "🌪️";
     if (this.tipo === "LUZ") icone = "✨";
     if (this.tipo === "ESCURIDAO") icone = "🌑";
-    ctx.fillText(icone, this.x, this.y + 7);
+
+    ctx.fillText(icone, this.x, this.y + 1); // +1 para ajuste visual
   }
 }
